@@ -1,7 +1,7 @@
 # active-directory-homelab
 Automated AD detection &amp; response homelab using Splunk, Shuffle (SOAR), and Slack. Detects unauthorized authentication, alerts SOC via Slack, triggers a Shuffle playbook for analyst approval via email, then disables the compromised Domain User on the DC and confirms in Slack.
 
-<img width="1568" height="635" alt="Pasted Graphic" src="https://github.com/user-attachments/assets/707963fc-548c-4bbf-a6cc-fcc224a9bcee" />
+<img width="1036" height="405" alt="Screenshot 2026-06-17 at 10 25 02 PM" src="https://github.com/user-attachments/assets/8efb07d3-bc3c-4c32-9d4c-6243353dea2f" />
 
 
 ## How It's Supposed to Work
