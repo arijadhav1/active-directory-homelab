@@ -113,7 +113,7 @@ With telemetry flowing, I built a Splunk alert to catch successful RDP logins co
 
 Windows Security Event ID 4624 covers successful logon events. RDP sessions specifically show up as Logon Type 7 or 10. Starting from there, I built the search out step by step:
 
-index=ari-ad EventCode=4624 (Logon_Type=7 OR Logon_Type=10) Source_Network_Address=* Source_Network_Address!="-" Source_Network_Address!="40.*" | stats count by _time, ComputerName, Source_Network_Address, user, Logon_Type
+`index=ari-ad EventCode=4624 (Logon_Type=7 OR Logon_Type=10) Source_Network_Address=* Source_Network_Address!="-" Source_Network_Address!="40.*" | stats count by _time, ComputerName, Source_Network_Address, user, Logon_Type`
 
 The `Source_Network_Address=*` filter removes events with no network address, `!="-"` drops local system noise, and `!="40.*"` filters out my own authorized IP so only unexpected sources trigger the alert.
 
