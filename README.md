@@ -72,4 +72,54 @@ After a restart, I signed into the test machine as `Ari\RWilson`. One more thing
 
 With that done, the domain is up, the user is in place, and the target machine is joined and accessible. Next up is installing Splunk and configuring it to start ingesting telemetry from the Windows machines.ed the VPC adapter's preferred DNS server to point to the ADDC's private IP, then successfully joined the machine to the Ari.local domain. Configured RDP permissions to allow the domain user (RWilson) remote login access via the Remote Desktop Users group.
 
+## Phase 2: Installing Splunk and Configuring Telemetry
+
+With the domain up and the machines talking to each other, the next step was getting visibility. That means Splunk on the Ubuntu server, universal forwarders on both Windows machines, and telemetry flowing into a centralized index.
+
+### Setting Up Splunk Enterprise
+
+I SSH'd into the Splunk machine from PowerShell, updated the repositories, then headed to Splunk's site to grab the Enterprise free trial. Selected the Linux .deb package and copied the wget link directly into the SSH session to download it on the server.
+
+Once downloaded, I installed it with `dpkg`, navigated to `/opt/splunk/bin`, and ran `./splunk start` to initialize it. That's where you set your admin username and password for the web interface.
+
+Accessing the web UI at `splunk-ip:8000` didn't work right away. Two things needed to happen: add a TCP rule for port 8000 in the Vultr firewall group, and run `ufw allow 8000` inside the SSH session. After both of those, the login page loaded fine.
+
+From there, a few configuration steps inside Splunk:
+
+- Set timezone to GMT under preferences
+- Installed the Splunk Add-on for Microsoft Windows from the app marketplace
+- Created a new index called `ari-ad`
+- Set up a receiving port on 9997 under Settings > Forwarding and Receiving
+
+### Installing the Universal Forwarder on the Target Machine
+
+I downloaded the Splunk Universal Forwarder from Splunk's site, copied it onto the Windows target machine, and ran the installer. During setup I pointed the receiving indexer at the Splunk server's VPC IP on port 9997.
+
+After install, I navigated to the forwarder's local config directory at `C:\Program Files\SplunkUniversalForwarder\etc\system\local`. There was no `inputs.conf` file there by default, so I copied one over from the default directory and edited it with Notepad running as admin, adding the following:
+
+[WinEventLog://Security]
+index = ari-ad
+disabled = false
+
+Then in Services, I opened the SplunkForwarder service, switched the log on account to Local System, and restarted it.
+
+After restarting, I went back to the Splunk web UI and ran `index=ari-ad` in Search and Reporting. Nothing came back at first. The fix was running `ufw allow 9997` on the Splunk server to open that port. After that, events started flowing in.
+
+I repeated the same process on the Domain Controller. Once both forwarders were running, checking the host field in Splunk showed two values, confirming telemetry was coming in from both machines.
+
+### Building the Alert
+
+With telemetry flowing, I built a Splunk alert to catch successful RDP logins coming from outside the expected network.
+
+Windows Security Event ID 4624 covers successful logon events. RDP sessions specifically show up as Logon Type 7 or 10. Starting from there, I built the search out step by step:
+
+index=ari-ad EventCode=4624 (Logon_Type=7 OR Logon_Type=10) Source_Network_Address=* Source_Network_Address!="-" Source_Network_Address!="40.*" | stats count by _time, ComputerName, Source_Network_Address, user, Logon_Type
+
+The `Source_Network_Address=*` filter removes events with no network address, `!="-"` drops local system noise, and `!="40.*"` filters out my own authorized IP so only unexpected sources trigger the alert.
+
+To test it, I loosened the Vultr firewall rule for RDP from my IP only to anywhere, then RDP'd in from Kali Linux. Refreshing the search immediately surfaced the event with a different source IP, confirming the detection logic worked.
+
+I saved the search as an alert named `Ari-Unauthorized-Successful-Login-RDP`, set it to run on a cron schedule every minute against the last 60 minutes of data, with severity set to Medium. Within a minute of saving it, the alert showed up under Activity > Triggered Alerts.
+
+Next up is connecting Splunk to Shuffle and building the automated response playbook.
 
