@@ -78,6 +78,8 @@ With the domain up and the machines talking to each other, the next step was get
 
 ### Setting Up Splunk Enterprise
 
+As I am on a Mac, SSH has to be done through the terminal.
+
 I SSH'd into the Splunk machine from PowerShell, updated the repositories, then headed to Splunk's site to grab the Enterprise free trial. Selected the Linux .deb package and copied the wget link directly into the SSH session to download it on the server.
 
 Once downloaded, I installed it with `dpkg`, navigated to `/opt/splunk/bin`, and ran `./splunk start` to initialize it. That's where you set your admin username and password for the web interface.
