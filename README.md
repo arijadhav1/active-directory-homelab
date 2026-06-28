@@ -82,6 +82,9 @@ As I am on a Mac, SSH has to be done through the terminal.
 
 I SSH'd into the Splunk machine from PowerShell, updated the repositories, then headed to Splunk's site to grab the Enterprise free trial. Selected the Linux .deb package and copied the wget link directly into the SSH session to download it on the server.
 
+<img width="570" height="269" alt="root@Ari-Splunk-# wget -0 splunk-10 4 0-f798d4d49089-11nux-and64 deb" src="https://github.com/user-attachments/assets/1fb30d97-6ae7-4351-b28b-6bf946b53946" />
+
+
 Once downloaded, I installed it with `dpkg`, navigated to `/opt/splunk/bin`, and ran `./splunk start` to initialize it. That's where you set your admin username and password for the web interface.
 
 Accessing the web UI at `splunk-ip:8000` didn't work right away. Two things needed to happen: add a TCP rule for port 8000 in the Vultr firewall group, and run `ufw allow 8000` inside the SSH session. After both of those, the login page loaded fine.
