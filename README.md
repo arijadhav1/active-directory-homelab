@@ -175,3 +175,4 @@ When I first ran `./splunk start`, it skipped the license agreement and credenti
 
 After getting the forwarder running on the test machine and restarting the service, no events were showing up in Splunk. The issue was that I had disconnected and reconnected my SSH session without restarting Splunk on the server. Once I started it again on the Ubuntu machine, telemetry started flowing immediately.
 
+Next part is creating telemetry and using Shuffle to create a playbook.
